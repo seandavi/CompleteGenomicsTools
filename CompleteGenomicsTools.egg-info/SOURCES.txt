@@ -1,0 +1,9 @@
+setup.cfg
+setup.py
+CompleteGenomicsTools.egg-info/PKG-INFO
+CompleteGenomicsTools.egg-info/SOURCES.txt
+CompleteGenomicsTools.egg-info/dependency_links.txt
+CompleteGenomicsTools.egg-info/entry_points.txt
+CompleteGenomicsTools.egg-info/not-zip-safe
+CompleteGenomicsTools.egg-info/top_level.txt
+completegenomicstools/__init__.py

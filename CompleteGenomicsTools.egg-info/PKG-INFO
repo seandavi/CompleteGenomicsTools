@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: CompleteGenomicsTools
+Version: 0.1dev
+Summary: Tools for manipulating and visualizing data from Complete Genomics
+Home-page: https://github.com/seandavi/CompleteGenomicsTools
+Author: Sean Davis
+Author-email: seandavi@gmail.com
+License: GPL-2
+Description: UNKNOWN
+Keywords: genomics biology bioinformatics sequencing
+Platform: UNKNOWN
