@@ -7,3 +7,4 @@ CompleteGenomicsTools.egg-info/entry_points.txt
 CompleteGenomicsTools.egg-info/not-zip-safe
 CompleteGenomicsTools.egg-info/top_level.txt
 completegenomicstools/__init__.py
+completegenomicstools/cg_somaticcalls2annovar.py

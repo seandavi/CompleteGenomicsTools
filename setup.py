@@ -8,7 +8,8 @@ setup(name='CompleteGenomicsTools',
       description="Tools for manipulating and visualizing data from Complete Genomics",
       long_description="""\
 """,
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      classifiers=["Operating System :: OS Independent",
+                   "Topic :: Scientific/Engineering :: Bio-Informatics"], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='genomics biology bioinformatics sequencing',
       author='Sean Davis',
       author_email='seandavi@gmail.com',
