@@ -9,3 +9,5 @@ License: GPL-2
 Description: UNKNOWN
 Keywords: genomics biology bioinformatics sequencing
 Platform: UNKNOWN
+Classifier: Operating System :: OS Independent
+Classifier: Topic :: Scientific/Engineering :: Bio-Informatics
