@@ -2,10 +2,6 @@
 from completegenomicstools.main import parser
 import completegenomicstools.commands
 
-print parser
-print dir(parser)
-print parser._subparsers
-
 args = parser.parse_args()
 args.func(args)
 

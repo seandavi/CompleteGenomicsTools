@@ -21,6 +21,7 @@ setup(name='CompleteGenomicsTools',
       install_requires=[
           # -*- Extra requirements: -*-
       ],
+      scripts=['scripts/cgent'],
       entry_points="""
       # -*- Entry points: -*-
       """,

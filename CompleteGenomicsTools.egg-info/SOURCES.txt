@@ -8,3 +8,8 @@ CompleteGenomicsTools.egg-info/not-zip-safe
 CompleteGenomicsTools.egg-info/top_level.txt
 completegenomicstools/__init__.py
 completegenomicstools/cg_somaticcalls2annovar.py
+completegenomicstools/command.py
+completegenomicstools/commands.py
+completegenomicstools/formats.py
+completegenomicstools/main.py
+scripts/cgent
