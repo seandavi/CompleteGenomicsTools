@@ -3,7 +3,6 @@ from completegenomicstools.formats import DepthOfCoverageFile
 import itertools
 
 def prepcgh(args):
-    print args
     tfile = DepthOfCoverageFile(args.tumorfile)
     nfile = DepthOfCoverageFile(args.normalfile)
     if(nfile.header['GENOME_REFERENCE']!=tfile.header['GENOME_REFERENCE']):
