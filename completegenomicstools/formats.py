@@ -41,7 +41,6 @@ class DepthOfCoverageFile:
     """
     def __init__(self,fname):
         self.fh=csv.reader(open(fname,'r'),delimiter="\t")
-        print self.fh
         self.header={}
         self._readheader()
         self.colnames=self.fh.next()
