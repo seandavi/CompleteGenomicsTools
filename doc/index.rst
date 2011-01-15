@@ -3,6 +3,13 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. toctree::
+   :hidden:
+
+   cgatools
+
+.. index:: somatic2annovar, cgatools, annovar, summarize_annovar.pl, SomaticScore, Circos
+
 Welcome to Complete Genomics Tools's documentation!
 ===================================================
 
@@ -10,7 +17,7 @@ Welcome to Complete Genomics Tools's documentation!
 
 Installation
 ------------
-The Complete Genomics Tools is meant to augment the tools already available from Complete Genomics.  In addition, the visualization pieces rely on the Circos library being installed.
+The Complete Genomics Tools is meant to augment the tools already available from Complete Genomics.  In addition, the visualization pieces rely on the Circos_ library being installed.
 
 This library assumes that these tools have been installed already:
 
@@ -33,11 +40,27 @@ Given two samples, a tumor sample and an normal sample, one often wants to call 
 
 ::
 
-   % cgatools calldiff ....
-   % cgent somatic2annovar SomaticOutput.tsv
-   % summarize_annovar.pl ....
+   % cgatools calldiff --reference=/data/sedavis/public/CG/build37.crr \
+       --variantsA=/data/sedavis/sequencing/beppe/CGI/GS000002674-DID/GS000001738-ASM/GS00359-DNA_F01/ASM/var-GS000001738-ASM.tsv.bz2 \
+       --variantsB=/data/sedavis/sequencing/beppe/CGI/GS000002675-DID/GS000001739-ASM/GS00359-DNA_G01/ASM/var-GS000001739-ASM.tsv.bz2 \
+       --reports=SuperlocusOutput,SuperlocusStats,LocusOutput,LocusStats,VariantOutput,SomaticOutput \
+       --export-rootA=/data/sedavis/sequencing/beppe/CGI/GS000002674-DID/GS000001738-ASM/GS00359-DNA_F01 \
+       --export-rootB=/data/sedavis/sequencing/beppe/CGI/GS000002675-DID/GS000001739-ASM/GS00359-DNA_G01 \
+       --beta
 
-The output of these steps will be a tab-delimited text file containing the variants that are in the tumor but not in the normal.  The last column, the SomaticScore, is a value between 0 and 1, with higher numbers being more likely to be true somatic variants.  However, even numbers as low as 0.1 (or lower) still show a fairly high sensitivity and specificity.
+The :program:`calldiff` command takes as input two variant files and two matching "export roots".  The variant files have the name "var-..." and normally live in the export-root/ASM directory.  File A above is the tumor while file B represents the normal sample.  The export root is the directory directly above the ASM directory.
+
+::
+
+   % cgent somatic2annovar SomaticOutput.tsv > somatic.annovar.input
+
+The :program:`somatic2annovar` command simply transforms the calldiff-generated SomaticOutput.tsv file into the appropriate input format for annovar.
+
+::
+
+   % summarize_annovar.pl --buildver=hg19 somatic.annovar.input /data/sedavis/public/annovar/hg19/
+
+The :program:`summarize_annovar.pl` script simply runs a standard set of annovar scripts and combines the output into a single text file suitable for filtering in Excel, for example.  The final output, then, of these steps will be a tab-delimited text file containing the variants that are in the tumor but not in the normal.  The last column, the SomaticScore, is a value between 0 and 1, with higher numbers being more likely to be true somatic variants.  However, even numbers as low as 0.1 (or lower) still show a fairly high sensitivity and specificity.  See the cgatools documentation for more details on the calculation and interpretation of the SomaticScore.
 
 .. _cgatools: http://cgatools.sourceforge.net/
 .. _Circos: http://mkweb.bcgsc.ca/circos/
