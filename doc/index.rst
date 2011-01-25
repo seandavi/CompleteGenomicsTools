@@ -6,20 +6,103 @@
 .. toctree::
    :hidden:
 
+   
    cgatools
 
-.. index:: somatic2annovar, cgatools, annovar, summarize_annovar.pl, SomaticScore, Circos
+.. index:: somatic2annovar, cgatools, annovar, summarize_annovar.pl, SomaticScore, Circos, mastervar, BAM, SAM, IGV, generatemastervar, evidence2sam
 
-Welcome to Complete Genomics Tools's documentation!
+Introduction to Complete Genomics Data
 ===================================================
 
 `Complete Genomics <http://completegenomics.com>`_ is a sequencing company that offers human whole-genome sequencing.  They also provide primary data analysis and generally ship a disk with data back to the customer that contains raw data as well as processed data.  While they do provide this service, they do not provide visualization of the data and do not provide multiple-sample analyses such as tumor/normal comparisons or family-based analysis.  This toolset is small and very utilitarian and meant to fill in gaps in what is offered by Complete Genomics.
 
-Installation
-------------
-The Complete Genomics Tools is meant to augment the tools already available from Complete Genomics.  In addition, the visualization pieces rely on the Circos_ library being installed.
+Complete Genomics Data Overview
+-------------------------------
+The data distributed by Complete Genomics are described on their website and in numerous documents they hand out to customers.  A high-level view of the directory structure is probably useful to have, though.  Keep in mind that all data from the company are *based on a single sample*.  Comparisons between samples or other multisample datasets need to be derived using Complete Genomics cgatools_ or other scripts.
 
-This library assumes that these tools have been installed already:
+.. figure:: CGDirectoryStructure.png
+   :alt: Directory structure
+   :width: 600px
+
+   This figure shows the Complete Genomics directory structure.  Files (or representative names) are shaded and directories are in white.
+
+Important files of interest are described in the table.
+
+.. csv-table
+   :header: "File","Directory","Description"
+   :widths: 20, 20, 75
+
+   "summary","ASM","This file is very small (50 lines or so) and gives a very high-level overview of the sequencing, including things like coverage, number of snps and indels, variant classifications, and ti/tv, etc."
+
+Working with cgatools_
+======================
+Complete Genomics supports a toolset called cgatools_.  This set of tools implements a number of very useful algorithms for single-sample datasets, tumor/normal datasets, and, potentially association-type or family-based datasets.  While not meant to be a complete review of the toolset (see the cgatools_ docs for details), this section is meant to give a couple of examples that are important in all workflows.
+
+
+Viewing the Data in Genomic Context--Generating BAM Files
+---------------------------------------------------------
+The reads used to support reference and variant calls that are aligned to the genome are stored in the *ASM/EVIDENCE* directory in files called *evidenceDnbs-chr*.  The file format is tab-separated text and the files are split per chromosome.  The cgatools_ software can convert these reads into `SAM/BAM format`__.  This can be quite useful for verifying variants in a visual and genomic context using tools like the `IGV software <http://www.broadinstitute.org/software/igv/>` or the `UCSC genome browser <http://genome.ucsc.edu>`.
+
+.. _SAMBAM: http://samtools.sourceforge.net/SAM-1.3.pdf
+
+__ SAMBAM_
+
+The actual cgatools_ evidence2sam call looks like:
+
+.. code-block:: bash
+
+   cgatools evidence2sam --beta \
+     -e evidenceDnbs-chr1-GS000002012-ASM.tsv.bz2 \
+     -s /path/to/build37.crr \
+     --add-mate-sequence \
+     --add-allele-id \
+     -o evidenceDnbs-chr1-GS000002012-ASM.sam
+
+Note that cgatools_ happily reads from compressed files.  From the output SAM format file, one will need to convert to the binary BAM format and then sort the file into chromosome order:
+
+.. code-block:: bash
+
+   samtools import /path/to/build37.fa.fai evidenceDnbs-chr1-GS000002012-ASM.sam \
+     evidenceDnbs-chr1-GS000002012-ASM.bam
+   samtools sort evidenceDnbs-chr1-GS000002012-ASM.bam evidenceDnbs-chr1-GS000002012-ASM.sorted
+
+One can write a simple *for* loop over the evidenceDnbs-chr* files to generate one BAM file per chromosome.  After doing so, merging into one file will enable typical tools that read the BAM format or a genome browser to operate on the whole genome.
+
+.. code-block:: bash
+   
+   samtools merge mysample.bam \*.sorted.bam 
+   samtools index mysample.bam
+
+Here, *mysample.bam* represents the final BAM file name.  The samtools index command will generate a *mysample.bam.bai* file that will be use for very fast random access to any genomic location of interest.
+
+.. sidebar:: SAM (and BAM) Format
+
+    SAM (Sequence Alignment/Map) format is a generic format for storing large nucleotide sequence alignments. SAM aims to be a format that:
+
+	* Is flexible enough to store all the alignment information generated by various alignment programs;
+	* Is simple enough to be easily generated by alignment programs or converted from existing alignment formats;
+	* Is compact in file size;
+	* Allows most of operations on the alignment to work on a stream without loading the whole alignment into memory;
+	* Allows the file to be indexed by genomic position to efficiently retrieve all reads aligning to a locus. 
+
+    SAM Tools provide various utilities for manipulating alignments in the SAM format, including sorting, merging, indexing and generating alignments in a per-position format.
+
+Overview of Variants--Generating a Mastervar File
+-------------------------------------------------
+Prior to mid-January, 2011, Complete Genomics were using several different files for storing biologically relevant genomic data.  For example, there were files for copy number, exonic variants, and non-exonic variants and annotation was sparse.  Recently, they have begun to ship with a file called a Mastervar format file.  This file is a one-stop-shop for variant data and annotation.  Unfortunately, it does not exist for older data deliveries; fortunately, it is simple to generate it:
+
+.. code-block:: bash
+
+   cgatools generatemastervar --beta --variants=var-GS000002013-ASM.tsv.bz2 \
+     --export-root=../ --reference=/data/sedavis/public/CG/build37.crr \
+     --annotations=copy,evidence,gene,ncrna,repeat,segdup,cnv \
+     --repmask-data=/data/sedavis/public/CG/rmsk37.tsv.gz \
+     --segdup-data=/data/sedavis/public/CG/segdup37.tsv.gz \
+     --output=GS000002013.mastervar.tsv   
+
+The Complete Genomics Tools Library
+===================================
+The Complete Genomics Tools software library is a simple set of tools meant to augment the tools already available from Complete Genomics.  As such, an understanding of what cgatools_ does and the file formats and information content are assumed.  In addition, the visualization pieces rely on the Circos_ library being installed.  *This library assumes that these tools have been installed*:
 
 * cgatools_
 
@@ -27,7 +110,11 @@ This library assumes that these tools have been installed already:
 
 * annovar_
 
-After making sure that these libraries are correctly installed, installation of Complete Genomics Tools can be done via two methods.  To install using `pip <http://pypi.python.org/pypi/pip>`_, simply:
+
+Installation
+------------
+After making sure that the libraries noted above are correctly installed, installation of Complete Genomics Tools can be done via two methods.  To install using `pip <http://pypi.python.org/pypi/pip>`_, simply:
+
 ::
 
    % pip install completegenomicstools
@@ -73,12 +160,13 @@ Circos_ is a fantastic tool for visualizing genomic data.  However, setup and fi
 
 
 CGH Data
-^^^^^^^^
+--------
+
 
 
 
 Junction Data
-^^^^^^^^^^^^^
+-------------
 Complete Genomics provides junction files separately for tumor and normal.  A first step is to "subtract" the junctions in the normal from the tumor:
 
 ::
