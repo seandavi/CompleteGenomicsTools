@@ -2,6 +2,9 @@ from completegenomicstools.main import subparsers
 from completegenomicstools.formats import DepthOfCoverageFile
 import itertools
 import csv
+import os
+import glob
+import subprocess
 
 def prepcgh(args):
     tfile = DepthOfCoverageFile(args.tumorfile)
@@ -25,6 +28,53 @@ prepcgh_parser.add_argument("-f","--format",default="circos",choices=['tdt','cir
                             dest="format",help="output format, tdt for tab-delimited text or circos for circos copy number file")
 prepcgh_parser.set_defaults(func=prepcgh)
 
+def generatemastervar(args):
+    varfile=glob.glob(os.path.join(args.exportroot,'ASM',"var-GS*"))
+    if(len(varfile)>1):
+        raise Exception('Only one file matching var-GS* should be present in the ASM directory')
+    if(len(varfile)==0):
+        raise Exception('No file matching var-GS* was found')        
+    varfile=varfile[0]
+    callargs=['cgatools','generatemastervar',
+              '--beta',
+              '--reference',args.reference,
+              '--output',args.output,
+              '--variants',varfile,
+              '--repmask-data',args.repmask,
+              '--export-root',args.exportroot,
+              '--segdup-data',args.segdup]
+    if(args.annotations is not None):
+        callargs+=['--annotations',args.annotations]
+    retcode=subprocess.call(callargs)
+    exit(retcode)
+
+gmastervar_parser = subparsers.add_parser(
+    'generatemastervar',
+    help="""A small wrapper around the cgatools generatemastervar command so that one does not need to specify the variant file directly.  Instead, the variant file is discovered based on the export root""")
+gmastervar_parser.add_argument(
+    '--reference',dest='reference',
+    help="The path to the Complete Genomics reference file.  The file typically ends in .crr",
+    required=True)                         
+gmastervar_parser.add_argument(
+    '--repmask-data',dest='repmask',
+    help="The path to the repeat mask file",
+    required=True)
+gmastervar_parser.add_argument(
+    '--segdup-data',dest='segdup',
+    help="The path to the segmental duplication file",
+    required=True)
+gmastervar_parser.add_argument(
+    '--export-root',dest='exportroot',
+    help="The export root for the sample.  This directory is the directory containing the ASM directory",
+    required=True)
+gmastervar_parser.add_argument(
+    '--output',dest="output",
+    help="The output file name",
+    required=True)
+gmastervar_parser.add_argument(
+    '--annotations',dest='annotations',
+    help="comma-separated list of annotations to add to each row of the mastervar file.  See the cgatools documentation for more details or type 'cgatools generatemastervar --help' at the command line.  The default is as used by cgatools.")
+gmastervar_parser.set_defaults(func=generatemastervar)
 
 def junc2circos(args):
     f = csv.reader(open(args.junctionfile,'r'),delimiter="\t")

@@ -144,8 +144,6 @@ class SuperlocusVariantFile:
     1101    chr1    1594200 1594200 alt-identical;onlyA             T;T     T;
     1102    chr1    1594209 1594210 ref-identical;onlyB     C       C;C     C;T
     1103    chr1    1594220 1594221 ref-identical;onlyB     C       C;C     C;A
-
-
     """
 
     def __init__(self,fname):
