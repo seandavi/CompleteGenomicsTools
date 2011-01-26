@@ -121,9 +121,20 @@ After making sure that the libraries noted above are correctly installed, instal
 
 If you prefer to work with the source code, the repository is hosted on `GitHub <http://github.com/seandavi/CompleteGenomicsTools/>`_.
 
+Tumor versus Normal Workflow
+----------------------------
+
+
+
 Calling and Annotating Somatic Variants
----------------------------------------
-Given two samples, a tumor sample and an normal sample, one often wants to call and annotate somatic variants.  The Complete Genomics cgatools_ offers the calling functionality, but the variants must then be annotated.  A sample workflow looks like this:
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+Given two samples, a tumor sample and an normal sample, one often wants to call and annotate somatic variants.  The Complete Genomics cgatools_ offers a tool called :program:calldiff that offers that functionality.  The output of that command includes a number of files that describe how the two samples differ in their genotypes.  However, the functional annotation present in the original variant files is, unfortunately, lost in the process.  So, the output from the :program:calldiff must be filtered for biological relevance and then annotated for functional relevance.  A high-level workflow like this:
+
+  1. Apply cgatools_ calldiff to the tumor and normal samples
+  2. Filter :program: calldiff output to find variants that differ between the tumor and normal in an interesting way
+  3. Annotate the interesting variants in the tumor with functional information using annovar_, specifically the :program:summarize_annovar.pl script
+
+An example of the cgatools_ calldiff command looks like:
 
 ::
 
@@ -135,7 +146,9 @@ Given two samples, a tumor sample and an normal sample, one often wants to call 
        --export-rootB=/data/sedavis/sequencing/beppe/CGI/GS000002675-DID/GS000001739-ASM/GS00359-DNA_G01 \
        --beta
 
-The :program:`calldiff` command takes as input two variant files and two matching "export roots".  The variant files have the name "var-..." and normally live in the export-root/ASM directory.  File A above is the tumor while file B represents the normal sample.  The export root is the directory directly above the ASM directory.
+The :program:`calldiff` command takes as input two variant files and two matching "export roots".  The variant files have the name "var-..." and normally live in the export-root/ASM directory.  File *A* is always the tumor while file *B* represents the normal sample.  The export root is the directory directly above the ASM directory.
+
+
 
 ::
 
@@ -154,19 +167,18 @@ The :program:`summarize_annovar.pl` script simply runs a standard set of annovar
 .. _annovar: http://www.openbioinformatics.org/annovar/
 
 Using Circos_ to Visualize Data
--------------------------------
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Circos_ is a fantastic tool for visualizing genomic data.  However, setup and file formatting take a bit of work, so the cgent script includes functionality to convert junction files and CGH tracks to a format that can be used directly with Circos_.  
 
 
 
 CGH Data
---------
-
+++++++++
 
 
 
 Junction Data
--------------
++++++++++++++
 Complete Genomics provides junction files separately for tumor and normal.  A first step is to "subtract" the junctions in the normal from the tumor:
 
 ::
