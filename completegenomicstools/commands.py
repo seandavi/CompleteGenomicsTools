@@ -1,33 +1,56 @@
 from completegenomicstools.main import subparsers
 from completegenomicstools.formats import DepthOfCoverageFile
+import completegenomicstools
 import itertools
 import csv
 import os
 import glob
 import subprocess
+import sys
 
+##################################################################
+# prepcgh command
+##################################################################
 def prepcgh(args):
     tfile = DepthOfCoverageFile(args.tumorfile)
     nfile = DepthOfCoverageFile(args.normalfile)
     if(nfile.header['GENOME_REFERENCE']!=tfile.header['GENOME_REFERENCE']):
-        raise Exception('Genome references not matching')
+        raise Exception('Genome references not matching between tumor and normal')
+    if(nfile.header['WINDOW_WIDTH']!=tfile.header['WINDOW_WIDTH']):
+        raise Exception('Window widths not matching between tumor and normal')
     windowsize=int(tfile.header['WINDOW_WIDTH'])/2
-    
-    for (tline,nline) in itertools.izip(tfile,nfile):
-        if(args.format=='circos'):
-            print "%s %d %d %f" % (tline[0].replace("chr","hs"),tline[1]-windowsize,tline[1]+windowsize,tline[5]/nline[5])
-        else:
-            print "%s\t%d\t%d\t%f" % (tline[0],tline[1]-windowsize,tline[1]+windowsize,tline[5]/nline[5])
 
+    circosfile=None
+    textfile=sys.stdout
+    if(args.outprefix is not None):
+        circosfile=open(args.outprefix+".circos",'w')
+        textfile=open(args.outprefix+".txt",'w')
+    for (tline,nline) in itertools.izip(tfile,nfile):
+        if(args.outprefix is not None):
+            circosfile.write("%s %d %d %f\n" % (tline[0].replace("chr","hs"),tline[1]-windowsize,tline[1]+windowsize,tline[5]/nline[5]))
+        textfile.write("%s\t%d\t%d\t%f\n" % (tline[0],tline[1]-windowsize,tline[1]+windowsize,tline[5]/nline[5]))
+    if(args.outprefix is not None):
+        circosfile.close()
+        textfile.close()
+
+###
 prepcgh_parser = subparsers.add_parser('prepcgh',help="Prepare CGH files from tumor/normal pairs")
-prepcgh_parser.add_argument("-t","--tumor-file",required=True,
-                            dest="tumorfile",help="The name of a depthOfCoverage file from Complete Genomics associate with a tumor")
-prepcgh_parser.add_argument("-n","--normal-file",required=True,
-                            dest="normalfile",help="The name of a depthOfCoverage file from Complete Genomics associated with a paired normal")
-prepcgh_parser.add_argument("-f","--format",default="circos",choices=['tdt','circos'],
-                            dest="format",help="output format, tdt for tab-delimited text or circos for circos copy number file")
+prepcgh_parser.add_argument(
+    "-t","--tumor-file",required=True,
+    dest="tumorfile",help="The name of a depthOfCoverage file from Complete Genomics associate with a tumor")
+prepcgh_parser.add_argument(
+    "-n","--normal-file",required=True,
+    dest="normalfile",
+    help="The name of a depthOfCoverage file from Complete Genomics associated with a paired normal")
+prepcgh_parser.add_argument(
+    "-o","--output-prefix",
+    dest="outprefix",
+    help="The prefix used for output; output file will be outprefix.txt and outprefix.circos.  If not specified, output will be the text format and will go to stdout")
 prepcgh_parser.set_defaults(func=prepcgh)
 
+##################################################################
+# generatemastervar command
+##################################################################
 def generatemastervar(args):
     varfile=glob.glob(os.path.join(args.exportroot,'ASM',"var-GS*"))
     if(len(varfile)>1):
@@ -48,6 +71,7 @@ def generatemastervar(args):
     retcode=subprocess.call(callargs)
     exit(retcode)
 
+###
 gmastervar_parser = subparsers.add_parser(
     'generatemastervar',
     help="""A small wrapper around the cgatools generatemastervar command so that one does not need to specify the variant file directly.  Instead, the variant file is discovered based on the export root""")
@@ -76,6 +100,9 @@ gmastervar_parser.add_argument(
     help="comma-separated list of annotations to add to each row of the mastervar file.  See the cgatools documentation for more details or type 'cgatools generatemastervar --help' at the command line.  The default is as used by cgatools.")
 gmastervar_parser.set_defaults(func=generatemastervar)
 
+##################################################################
+# junc2circos command
+##################################################################
 def junc2circos(args):
     f = csv.reader(open(args.junctionfile,'r'),delimiter="\t")
     line = f.next()
@@ -89,11 +116,19 @@ def junc2circos(args):
                                                   int(line[6]),int(line[6])+int(line[8]))
 
 
-junc2circos_parser=subparsers.add_parser('junc2circos',help='Convert Complete Genomics junction files to circos')
-junc2circos_parser.add_argument("junctionfile",help="Name of a complete genomics junction file (or junctiondiff file)")
+junc2circos_parser=subparsers.add_parser(
+    'junc2circos',
+    help='Convert a Complete Genomics junction file to circos format')
+junc2circos_parser.add_argument(
+    "junctionfile",
+    help="Name of a complete genomics junction file (or junctiondiff file)")
 junc2circos_parser.set_defaults(func=junc2circos)
 
 
+
+##################################################################
+# somatic2annovar command
+##################################################################
 def somatic2annovar(args):
     """
     :param fname: Filename of the somatic call file as generated by a call to cgatools calldiff
@@ -113,10 +148,63 @@ def somatic2annovar(args):
                          row['alleleSeq'],row['varType'],row['LocusClassification'],
                          row['SomaticCategory'],row['SomaticScore']])
 
+###
 s2a_parser = subparsers.add_parser('somatic2annovar',help='Convert SomaticOutput.tsv file to annovar input format')
 s2a_parser.add_argument("SomaticOutput",help="filename of a Complete Genomics SomaticOutput.tsv file, the result of running cgatools calldiff")
 s2a_parser.set_defaults(func=somatic2annovar)
-    
+
+
+##################################################################
+# genotypes2snpdiff command
+##################################################################
+def genotypes2snpdiff(args):
+    # assumes pileup format input for now
+    pfile = completegenomicstools.formats.PileupFile(args.genfile)
+    outfile=sys.stdout
+    if(args.outfile is not None):
+        outfile=open(args.outfile)
+        outfile.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" %
+                      ("Chromosome",
+                       "Offset0Based",
+                       "GenotypesStrand",
+                       "Genotypes",
+                       "GenQuality",
+                       "VarQuality",
+                       "RMSmapping",
+                       "Coverage",
+                       "Bases",
+                       "Qualities"))
+    for p in pfile:
+        if(p.coverage>=args.mindepth):
+            outfile.write("%s\t%d\t+\t%s%s\t%d\t%d\t%d\t%d\t%s\t%s\n" %
+                          (p.chromosome,
+                           p.position,
+                           p.genotypes[0],
+                           p.genotypes[1],
+                           p.qual,
+                           p.varqual,
+                           p.rmsmapping,
+                           p.coverage,
+                           p.bases,
+                           p.qualities))
+    if(args.outfile is not None):
+        outfile.close()
+
+gen2snpdiff_parser = subparsers.add_parser(
+    'genotypes2snpdiff',
+    help="Convert a genotype file such a pileup file (the only format currently supported) to a snpdiff input file")
+gen2snpdiff_parser.add_argument(
+    "-o","--output",dest="outfile",
+    help="name of output file, uses stdout as default")
+gen2snpdiff_parser.add_argument(
+    "-d","--min-depth",default=6,dest="mindepth",
+    help="Minimum depth of coverage to be included")
+gen2snpdiff_parser.add_argument(
+    "genfile",
+    help="Genotype filename currently only the pileup format is supported")
+gen2snpdiff_parser.set_defaults(func=genotypes2snpdiff)
+
+
 
 from mako.template import Template
 def cancer2circos(args):

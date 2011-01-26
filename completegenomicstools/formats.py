@@ -160,3 +160,71 @@ class SuperlocusVariantFile:
     def next(self):
         row=self._iter().next()
         return(SuperlocusVariantRecord(row))
+
+class PileupRecord:
+    convertdict={'A':('A','A'),
+                 'G':('G','G'),
+                 'C':('C','C'),
+                 'T':('T','T'),
+                 'M':('A','C'),
+                 'R':('A','G'),
+                 'W':('A','T'),
+                 'S':('C','G'),
+                 'Y':('C','T'),
+                 'K':('G','T'),
+                 'N':('N','N')}
+    
+    def __init__(self,row):
+        """
+        Takes a row of a pileup file and generates a pileup record.  Note
+        that the pileup record here only deals with SNVs and not indels
+
+        Accessors include:
+
+        chromosome
+        position
+        reference
+        genotypes (a tuple of length 2)
+        qual
+        varqual
+        rmsmapping
+        coverage
+        bases
+        qualities
+        """
+        self.chromosome=row[0]
+        self.position=int(row[1])-1
+        self.reference=row[2].upper()
+        if(len(row[3])>1):
+            self.genotypes=('.','.')
+        else:
+            self.genotypes=self.convertdict[row[3].upper()]
+        self.qual=int(row[4])
+        self.varqual=int(row[5])
+        self.rmsmapping=int(row[6])
+        self.coverage=int(row[7])
+        self.bases=row[8]
+        self.qualities=row[9]
+
+    def isVariant(self):
+        if((self.genotypes[0]==self.reference) & (self.genotypes[1]==self.reference)):
+            return(False)
+        return(True)
+
+    def isHeterozygous(self):
+        return(self.genotypes[0]!=self.genotypes[1])
+
+class PileupFile:
+    def __init__(self,fname):
+        self.fh=open(fname,'r')
+
+    def _iter(self):
+        for i in self.fh:
+            yield i.strip().split("\t")
+
+    def __iter__(self):
+        return(self)
+
+    def next(self):
+        row=self._iter().next()
+        return(PileupRecord(row))
