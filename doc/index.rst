@@ -123,7 +123,9 @@ If you prefer to work with the source code, the repository is hosted on `GitHub 
 
 Tumor versus Normal Workflow
 ----------------------------
-
+.. figure:: tumorNormalWorkflow.png
+ :alt: Directory structure
+ :width: 600px
 
 
 Calling and Annotating Somatic Variants
@@ -192,6 +194,18 @@ The command above will generate a junctiondiff file that contains junctions that
    cgent junc2circos ....
 
 The cgent junc2circos command will then convert the junctiondiff file into a "link" file to be used by Circos.  The actual construction of the circos plot still needs to be done by hand at this time.
+
+
+Germline Variant Workflow
+----------------------------
+
+.. figure:: familybasedWorkflow.png
+   :alt: Germline Variant workflow
+   :width: 600px
+
+This is work.
+
+
 
 
 Indices and tables
