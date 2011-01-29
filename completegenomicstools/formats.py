@@ -1,5 +1,6 @@
 import csv
 import pdb
+import collections
 
 class DepthOfCoverageFile:
     """
@@ -214,11 +215,73 @@ class PileupRecord:
     def isHeterozygous(self):
         return(self.genotypes[0]!=self.genotypes[1])
 
+    def __str__(self):
+        return("%s\t%d\t%s/%s" % (self.chromosome,
+                                  self.position,
+                                  self.genotypes[0],
+                                  self.genotypes[1]))
+
 class PileupFile:
+    buffer=collections.deque()
+    
     def __init__(self,fname):
         self.fh=open(fname,'r')
+        self._getNextBlock()
 
-    def _iter(self):
+    def _getNextBlock(self):
+        row = self._iter().next()
+        # if indel, must deal with it
+        if(row[2]=="*"):
+            tmpgenotype=row[3].split("/")
+            if(tmpgenotype[0]==tmpgenotype[1]):
+                # the following case means that an indel was not called
+                if(tmpgenotype[0]=="*"):
+                    self._getNextBlock() # go get more lines
+                    return
+                # a deletion was found on both strands
+                if(tmpgenotype[1].startswith('-')):
+                    numberofdels=len(tmpgenotype[1])
+                    while(numberofdels>1):
+                        row=self._iter().next()
+                        tmprecord=PileupRecord(row)
+                        tmprecord.genotypes=("-","-")
+                        self.buffer.append(tmprecord)
+                        numberofdels-=1
+                    return
+                # Just skip insertions
+                if(tmpgenotype[1].startswith("+")):
+                    self._getNextBlock()
+                    return
+            # still working with indel, but now not the same on both strands
+            else:
+                # could be first allele
+                if(tmpgenotype[0].startswith('-') ):
+                    numberofdels=len(tmpgenotype[0])
+                    while(numberofdels>1):
+                        row=self._iter().next()
+                        tmprecord=PileupRecord(row)
+                        tmprecord.genotypes=(tmprecord.genotypes[0],"-")
+                        self.buffer.append(tmprecord)
+                        numberofdels-=1
+                    return
+                # or second allele
+                if(tmpgenotype[1].startswith('-') ):
+                    numberofdels=len(tmpgenotype[1])
+                    while(numberofdels>1):
+                        row=self._iter().next()
+                        tmprecord=PileupRecord(row)
+                        tmprecord.genotypes=(tmprecord.genotypes[0],"-")
+                        self.buffer.append(tmprecord)
+                        numberofdels-=1
+                    return
+                # just skip insertions
+                if((tmpgenotype[0].startswith("+")) | (tmpgenotype[1].startswith("+"))):
+                    self._getNextBlock()
+                    return
+        else:
+            self.buffer.append(PileupRecord(row))
+
+    def _iter(self):    
         for i in self.fh:
             yield i.strip().split("\t")
 
@@ -226,5 +289,11 @@ class PileupFile:
         return(self)
 
     def next(self):
-        row=self._iter().next()
-        return(PileupRecord(row))
+        try:
+            return(self.buffer.popleft())
+        except IndexError:
+            self._getNextBlock()
+            try:
+                return(self.buffer.popleft())
+            except IndexError:
+                raise StopIteration

@@ -163,17 +163,17 @@ def genotypes2snpdiff(args):
     outfile=sys.stdout
     if(args.outfile is not None):
         outfile=open(args.outfile)
-        outfile.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" %
-                      ("Chromosome",
-                       "Offset0Based",
-                       "GenotypesStrand",
-                       "Genotypes",
-                       "GenQuality",
-                       "VarQuality",
-                       "RMSmapping",
-                       "Coverage",
-                       "Bases",
-                       "Qualities"))
+    outfile.write("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" %
+                  ("Chromosome",
+                   "Offset0Based",
+                   "GenotypesStrand",
+                   "Genotypes",
+                   "GenQuality",
+                   "VarQuality",
+                   "RMSmapping",
+                   "Coverage",
+                   "Bases",
+                   "Qualities"))
     for p in pfile:
         if(p.coverage>=args.mindepth):
             outfile.write("%s\t%d\t+\t%s%s\t%d\t%d\t%d\t%d\t%s\t%s\n" %
@@ -204,6 +204,58 @@ gen2snpdiff_parser.add_argument(
     help="Genotype filename currently only the pileup format is supported")
 gen2snpdiff_parser.set_defaults(func=genotypes2snpdiff)
 
+##################################################################
+# testvariant2annovar command
+##################################################################
+def testvariant2annovar(args):
+    f = csv.reader(open(args.testvariantoutfile,'r'),delimiter="\t")
+    headers=f.next()
+    nsamples=len(headers)-8
+    set1=set(xrange(nsamples))
+    settypes=['00','01','11','0N','1N','NN','0','1','N']
+    print("\t".join(headers[1:3]+headers[5:7]+headers[8:]+settypes))
+    for row in f:
+        set1genotypes={'00':0,
+                       '01':0,
+                       '11':0,
+                       '0N':0,
+                       '1N':0,
+                       'NN':0,
+                       '0':0,
+                       '1':0,
+                       'N':0}
+        for genotype in row[8:]:
+            set1genotypes[genotype]+=1
+        beginval=int(row[2])+1
+        if(row[5]==""):
+            row[5]='-'
+            beginval=int(row[2])
+        if(row[6]==""):
+            row[6]='-'
+            beginval=int(row[2])
+        output="%s\t%d\t%s\t%s\t%s\t%s\t" % (row[1],
+                                             beginval,
+                                             row[3],
+                                             row[5],
+                                             row[6],
+                                             "\t".join(row[8:]))
+        output+="\t".join([str(set1genotypes[x]) for x in settypes])
+        print(output)
+                                         
+        
+
+tv2a_parser = subparsers.add_parser(
+    'testvariant2annovar',
+    help="Takes the output of cgatools testvariant command, optionally a grouping parameter, and outputs the 'summarized', annovar-ready format file"
+    )
+tv2a_parser.add_argument(
+    "testvariantoutfile",
+    help="The name of the cgatools testvariant output file")
+#tv2a_parser.add_argument(
+#    '-g','--group',dest="group",
+#    help="If not specified, summarization of genotypes will be done with all samples together.  If specified as a comma-separated list of integers representing the columns in the testvariant output file, then the columns in this group will form one of two groups that will be summarized separately.  This can be useful when there are, for example, affected and unaffected individuals that should be treated differently.")
+tv2a_parser.set_defaults(func=testvariant2annovar)
+                         
 
 
 from mako.template import Template
@@ -225,7 +277,7 @@ karyotype   = data/karyotype.human.txt
 
 <image>
 dir = ./
-file  = circos-example.png
+file  = circos-cancer.png
 #file = circos-example.svg
 # radius of inscribed circle in image
 radius         = 2000p
@@ -257,14 +309,6 @@ z      = 0
 radius = 0.725r
 bezier_radius = 0.3r
 
-<link normal>
-show         = no
-color        = blue_a3
-thickness    = 5
-file         = normalfile.txt
-#record_limit = 1000
-</link>
-
 <link diff>
 show         = yes
 color        = red_a3
@@ -272,17 +316,6 @@ thickness    = 5
 file         = ${difflink}
 #record_limit = 1000
 </link>
-
-
-
-<link cancer>
-show         = no
-color        = yellow_a5
-thickness    = 5
-file         = cancerfile.txt
-#record_limit = 1000
-</link>
-
 </links>
 
 <plots>
@@ -296,57 +329,9 @@ stroke_color     = blue
 stroke_thickness = 1
 glyph = circle
 glyph_size = 6
-min   = 0.4
-max   = 2
+min   = 0.2
+max   = 3
 r0    = 0.75r
-r1    = 0.85r
-
-background       = yes
-background_color = vlgrey
-#background_stroke_color = black
-#background_stroke_thickness = 1
-
-axis           = yes
-axis_color     = lgrey
-axis_thickness = 2
-axis_spacing   = 0.001
-
-<rules>
-
-<rule>
-importance   = 100
-condition    = _VALUE_ > 1.2
-stroke_color = dgreen
-fill_color   = green
-#glyph        = rectangle
-</rule>
-
-<rule>
-importance   = 85
-condition    = _VALUE_ < 0.8
-stroke_color = dred
-fill_color   = red
-#glyph        = triangle
-</rule>
-
-</rules>
-
-
-</plot>
-
-<plot>
-
-show  = yes
-type  = scatter
-file  = ${cn1file}
-fill_color = lblue
-stroke_color     = blue
-stroke_thickness = 1
-glyph = circle
-glyph_size = 6
-min   = 0.4
-max   = 2
-r0    = 0.875r
 r1    = 0.975r
 
 background       = yes
@@ -394,8 +379,27 @@ imagemap        = no
 units_ok        = bupr
 units_nounit    = n
 """
-    print Template(s).render(cnfile='abc',cn1file='123',difflink='xyz')
 
-cancer2circos_parser = subparsers.add_parser('cancer2circos',help='Convert SomaticOutput.tsv file to annovar input format')
-cancer2circos_parser.add_argument("SomaticOutput",help="filename of a Complete Genomics SomaticOutput.tsv file, the result of running cgatools calldiff")
+    outfile=sys.stdout
+    if(args.outfile is not None):
+        outfile=open(args.outfile,'w')
+    outfile.write(Template(s).render(cnfile=args.copynumberfile,difflink=args.linkfile))
+    outfile.write('\n')
+    outfile.close()
+                  
+
+cancer2circos_parser = subparsers.add_parser(
+    'cancer2circos',
+    help='After converting junction files (using cgent junc2circos) and circos-format copy number difference files (using cgent prepcgh), use this command to generate an input file for circos.  NOTE: This command is meant to be a quick way of getting a plot.  Circos is VERY flexible and this command cannot capitalize on that flexibility.  Using circos independently is recommended.')
+
+cancer2circos_parser.add_argument(
+    "linkfile",
+    help="The link file, typically generated with cgent junc2circos")
+cancer2circos_parser.add_argument(
+    "copynumberfile",
+    help="The copynumber file as generated by cgent prepcgh")
+cancer2circos_parser.add_argument(
+    '-o','--outfile',dest="outfile",
+    help="The file to which the circos input file will be written")
+
 cancer2circos_parser.set_defaults(func=cancer2circos)
