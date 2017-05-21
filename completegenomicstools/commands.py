@@ -25,7 +25,7 @@ def prepcgh(args):
     if(args.outprefix is not None):
         circosfile=open(args.outprefix+".circos",'w')
         textfile=open(args.outprefix+".txt",'w')
-    for (tline,nline) in itertools.izip(tfile,nfile):
+    for (tline,nline) in zip(tfile,nfile):
         if(args.outprefix is not None):
             circosfile.write("%s %d %d %f\n" % (tline[0].replace("chr","hs"),tline[1]-windowsize,tline[1]+windowsize,tline[5]/nline[5]))
         textfile.write("%s\t%d\t%d\t%f\n" % (tline[0],tline[1]-windowsize,tline[1]+windowsize,tline[5]/nline[5]))
@@ -105,15 +105,15 @@ gmastervar_parser.set_defaults(func=generatemastervar)
 ##################################################################
 def junc2circos(args):
     f = csv.reader(open(args.junctionfile,'r'),delimiter="\t")
-    line = f.next()
+    line = next(f)
     while(len(line)==2):
-        line=f.next()
-    f.next()
+        line=next(f)
+    next(f)
     for line in f:
-        print "%s %s %d %d\n%s %s %d %d" % (line[0],line[1].replace('chr','hs'),
+        print("%s %s %d %d\n%s %s %d %d" % (line[0],line[1].replace('chr','hs'),
                                                   int(line[2]),int(line[2])+int(line[4]),
                                                   line[0],line[5].replace('chr','hs'),
-                                                  int(line[6]),int(line[6])+int(line[8]))
+                                                  int(line[6]),int(line[6])+int(line[8])))
 
 
 junc2circos_parser=subparsers.add_parser(
@@ -143,10 +143,10 @@ def somatic2annovar(args):
             row['reference']="-"
             row['end']=str(int(row['end'])+1)
         if(row['alleleSeq']==""): row['alleleSeq']="-"
-        print "\t".join([row['chromosome'],row['begin'],
+        print("\t".join([row['chromosome'],row['begin'],
                          row['end'],row['reference'],
                          row['alleleSeq'],row['varType'],row['LocusClassification'],
-                         row['SomaticCategory'],row['SomaticScore']])
+                         row['SomaticCategory'],row['SomaticScore']]))
 
 ###
 s2a_parser = subparsers.add_parser('somatic2annovar',help='Convert SomaticOutput.tsv file to annovar input format')
@@ -209,11 +209,11 @@ gen2snpdiff_parser.set_defaults(func=genotypes2snpdiff)
 ##################################################################
 def testvariant2annovar(args):
     f = csv.reader(open(args.testvariantoutfile,'r'),delimiter="\t")
-    headers=f.next()
+    headers=next(f)
     nsamples=len(headers)-8
-    set1=set(xrange(nsamples))
+    set1=set(range(nsamples))
     settypes=['00','01','11','0N','1N','NN','0','1','N']
-    print("\t".join(headers[1:3]+headers[5:7]+headers[8:]+settypes))
+    print(("\t".join(headers[1:3]+headers[5:7]+headers[8:]+settypes)))
     for row in f:
         set1genotypes={'00':0,
                        '01':0,

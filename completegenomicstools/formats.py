@@ -44,13 +44,13 @@ class DepthOfCoverageFile:
         self.fh=csv.reader(open(fname,'r'),delimiter="\t")
         self.header={}
         self._readheader()
-        self.colnames=self.fh.next()
+        self.colnames=next(self.fh)
 
     def _readheader(self):
-        line=self.fh.next()
+        line=next(self.fh)
         while(len(line)==2):
             self.header[(line[0].replace("#",""))]=line[1]
-            line=self.fh.next()
+            line=next(self.fh)
         return
 
     def _iter(self):
@@ -60,8 +60,8 @@ class DepthOfCoverageFile:
     def __iter__(self):
         return(self)
 
-    def next(self):
-        tmp=self._iter().next()
+    def __next__(self):
+        tmp=next(self._iter())
         return(tuple([tmp[0],int(tmp[1]),
                      float(tmp[2]),
                      float(tmp[3]),
@@ -75,7 +75,7 @@ class SimpleGenotype(tuple):
     """
     def __init__(self,alleles):
         if(len(alleles)!=2):
-            raise(Exception("need two alleles"))
+            raise Exception
         super(SimpleGenotype,self).__init__(alleles)
 
     def __str__(self):
@@ -149,7 +149,7 @@ class SuperlocusVariantFile:
 
     def __init__(self,fname):
         self.fh=csv.reader(open(fname,'r'),delimiter="\t")
-        self.colnames=self.fh.next()
+        self.colnames=next(self.fh)
 
     def _iter(self):
         for i in self.fh:
@@ -158,8 +158,8 @@ class SuperlocusVariantFile:
     def __iter__(self):
         return(self)
 
-    def next(self):
-        row=self._iter().next()
+    def __next__(self):
+        row=next(self._iter())
         return(SuperlocusVariantRecord(row))
 
 class PileupRecord:
@@ -229,7 +229,7 @@ class PileupFile:
         self._getNextBlock()
 
     def _getNextBlock(self):
-        row = self._iter().next()
+        row = next(self._iter())
         # if indel, must deal with it
         if(row[2]=="*"):
             tmpgenotype=row[3].split("/")
@@ -242,7 +242,7 @@ class PileupFile:
                 if(tmpgenotype[1].startswith('-')):
                     numberofdels=len(tmpgenotype[1])
                     while(numberofdels>1):
-                        row=self._iter().next()
+                        row=next(self._iter())
                         tmprecord=PileupRecord(row)
                         tmprecord.genotypes=("-","-")
                         self.buffer.append(tmprecord)
@@ -258,7 +258,7 @@ class PileupFile:
                 if(tmpgenotype[0].startswith('-') ):
                     numberofdels=len(tmpgenotype[0])
                     while(numberofdels>1):
-                        row=self._iter().next()
+                        row=next(self._iter())
                         tmprecord=PileupRecord(row)
                         tmprecord.genotypes=(tmprecord.genotypes[0],"-")
                         self.buffer.append(tmprecord)
@@ -268,7 +268,7 @@ class PileupFile:
                 if(tmpgenotype[1].startswith('-') ):
                     numberofdels=len(tmpgenotype[1])
                     while(numberofdels>1):
-                        row=self._iter().next()
+                        row=next(self._iter())
                         tmprecord=PileupRecord(row)
                         tmprecord.genotypes=(tmprecord.genotypes[0],"-")
                         self.buffer.append(tmprecord)
@@ -288,7 +288,7 @@ class PileupFile:
     def __iter__(self):
         return(self)
 
-    def next(self):
+    def __next__(self):
         try:
             return(self.buffer.popleft())
         except IndexError:
