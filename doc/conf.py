@@ -41,8 +41,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'Complete Genomics Tools'
-copyright = u'2011, Sean Davis'
+project = 'Complete Genomics Tools'
+copyright = '2011, Sean Davis'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -179,8 +179,8 @@ htmlhelp_basename = 'CompleteGenomicsToolsdoc'
 # Grouping the document tree into LaTeX files. List of tuples
 # (source start file, target name, title, author, documentclass [howto/manual]).
 latex_documents = [
-  ('index', 'CompleteGenomicsTools.tex', u'Complete Genomics Tools Documentation',
-   u'Sean Davis', 'manual'),
+  ('index', 'CompleteGenomicsTools.tex', 'Complete Genomics Tools Documentation',
+   'Sean Davis', 'manual'),
 ]
 
 # The name of an image file (relative to this directory) to place at the top of
@@ -212,8 +212,8 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    ('index', 'completegenomicstools', u'Complete Genomics Tools Documentation',
-     [u'Sean Davis'], 1)
+    ('index', 'completegenomicstools', 'Complete Genomics Tools Documentation',
+     ['Sean Davis'], 1)
 ]
 
 

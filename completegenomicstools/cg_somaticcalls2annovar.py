@@ -9,15 +9,15 @@ def somatic2annovar(fname):
     :type fname: string
     """
     csvfile = csv.reader(open(fname,'r'),delimiter="\t")
-    csvfile.next()
+    next(csvfile)
     for row in csvfile:
         if(row[9]==""): 
             row[9]="-"
             row[7]=str(int(row[7])+1)
         if(row[10]==""): row[10]="-"
-        print "\t".join([row[5],row[6],
+        print("\t".join([row[5],row[6],
                         row[7],row[9],
-                        row[10],row[13],row[14]])
+                        row[10],row[13],row[14]]))
 
 if __name__=="__main__":
     somatic2annovar(sys.argv[1])
